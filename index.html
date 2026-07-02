@@ -189,11 +189,10 @@
     75%{ transform:rotate(4deg); }
   }
   @keyframes popIn{
-    0%{ transform:scale(0.5) translateY(20px); opacity:0; }
-    70%{ transform:scale(1.05) translateY(0); opacity:1; }
-    100%{ transform:scale(1) translateY(0); }
+    0%{ transform:translateY(24px); opacity:0; }
+    100%{ transform:translateY(0); opacity:1; }
   }
-  .pop-in{ animation:popIn 0.45s cubic-bezier(.34,1.56,.64,1) both; }
+  .pop-in{ animation:popIn 0.45s cubic-bezier(.22,1,.36,1) both; }
   @keyframes invitePulse{
     0%,100%{ transform:scale(1); }
     50%{ transform:scale(1.07); }
@@ -756,26 +755,27 @@ function initScratchCanvas(card, canvas, prize, hint){
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width+'px';
-    canvas.style.height = rect.height+'px';
+    // Display size is controlled purely by CSS (width:100%; height:100%) so the
+    // canvas always exactly covers the card, even if this rect was measured
+    // mid-entrance-animation (e.g. while the card is still scaling in).
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr,dpr);
 
-    // silver scratch layer with subtle pattern
+    // Bright blue foil scratch layer with subtle pattern
     const grad = ctx.createLinearGradient(0,0,rect.width,rect.height);
-    grad.addColorStop(0,'#e2e2e2');
-    grad.addColorStop(0.5,'#bdbdbd');
-    grad.addColorStop(1,'#d6d6d6');
+    grad.addColorStop(0,'#5B9DF9');
+    grad.addColorStop(0.5,'#2F6FED');
+    grad.addColorStop(1,'#1747C9');
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,rect.width,rect.height);
 
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
     for(let i=0;i<18;i++){
       ctx.beginPath();
       ctx.arc(Math.random()*rect.width, Math.random()*rect.height, Math.random()*3+1, 0, Math.PI*2);
       ctx.fill();
     }
-    ctx.fillStyle = '#8a8a8a';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('?', rect.width/2, rect.height/2+5);
