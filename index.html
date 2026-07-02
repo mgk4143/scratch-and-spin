@@ -95,22 +95,20 @@
     font-weight:700;
     opacity:0.9;
   }
-  .name-pill{
+  .name-input{
     border:none;
-    background:rgba(255,255,255,0.28);
-    color:#fff;
+    background:rgba(255,255,255,0.85);
+    color:#333;
     font-weight:700;
-    font-size:0.85rem;
-    padding:7px 16px;
+    font-size:0.9rem;
+    padding:8px 16px;
     border-radius:20px;
-    cursor:pointer;
-    transition:all .2s ease;
+    width:140px;
+    text-align:center;
+    outline:none;
   }
-  .name-pill.active{
-    background:#fff;
-    color:#7b2ff7;
-    box-shadow:0 3px 8px rgba(0,0,0,0.2);
-  }
+  .name-input:focus{ box-shadow:0 0 0 3px rgba(255,255,255,0.5); }
+  .name-input::placeholder{ color:#999; font-weight:600; }
   .tabs{
     display:flex;
     background:rgba(255,255,255,0.25);
@@ -390,9 +388,8 @@
   </label>
 
   <div class="name-picker" id="namePicker">
-    <span class="name-picker-label">Who's playing?</span>
-    <button type="button" class="name-pill" data-name="Pihu">Pihu</button>
-    <button type="button" class="name-pill" data-name="Manu">Manu</button>
+    <label for="kidNameInput" class="name-picker-label">Who's playing?</label>
+    <input type="text" id="kidNameInput" class="name-input" placeholder="Enter name" maxlength="20" autocomplete="off">
   </div>
 
   <div class="tabs">
@@ -640,7 +637,7 @@ tinyModeToggle.checked = isTinyMode();
 tinyModeToggle.addEventListener('change', ()=>{
   document.body.classList.toggle('tiny-mode', tinyModeToggle.checked);
   storeTinyMode(tinyModeToggle.checked);
-  resetBreakTimer();
+  resetBreakCounter();
   buildCards();
   WHEEL_PRIZES = pickUnique(getWheelSize());
   currentRotation = 0;
@@ -652,48 +649,61 @@ tinyModeToggle.addEventListener('change', ()=>{
 
 /* ---------------- Kid's name (for the break reminder) ---------------- */
 function readStoredKidName(){
-  try{ return localStorage.getItem('kidName') || 'Pihu'; }
-  catch(e){ return 'Pihu'; }
+  try{ return localStorage.getItem('kidName') || ''; }
+  catch(e){ return ''; }
 }
 function storeKidName(val){
   try{ localStorage.setItem('kidName', val); }catch(e){ /* ignore */ }
 }
 let kidName = readStoredKidName();
-const namePicker = document.getElementById('namePicker');
-function updateNamePillUI(){
-  namePicker.querySelectorAll('.name-pill').forEach(btn=>{
-    btn.classList.toggle('active', btn.dataset.name === kidName);
-  });
-}
-namePicker.querySelectorAll('.name-pill').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    kidName = btn.dataset.name;
-    storeKidName(kidName);
-    updateNamePillUI();
-  });
+function getDisplayName(){ return kidName.trim() || 'Kiddo'; }
+const kidNameInput = document.getElementById('kidNameInput');
+kidNameInput.value = kidName;
+kidNameInput.addEventListener('input', ()=>{
+  kidName = kidNameInput.value;
+  storeKidName(kidName);
 });
-updateNamePillUI();
 
 /* ---------------- Screen-time break reminder (Tiny Kids Mode only) ---------------- */
-const BREAK_FIRST_REMINDER_SECONDS = 5*60;   // first nudge after 5 minutes of active play
-const BREAK_REPEAT_SECONDS = 3*60;           // then every 3 minutes after that
-let activeSeconds = 0;
-let secondsSinceLastReminder = 0;
+/* Triggers every 4 reveals (scratch or spin) instead of a timer, since a
+   pre-reader responds to "you've played 4 times" better than a clock. */
+const REVEALS_PER_REMINDER = 4;
+let revealsSinceReminder = 0;
 
-function resetBreakTimer(){
-  activeSeconds = 0;
-  secondsSinceLastReminder = 0;
+function resetBreakCounter(){
+  revealsSinceReminder = 0;
 }
 
-function speak(text){
+function registerReveal(){
+  if(!isTinyMode()) return;
+  revealsSinceReminder++;
+  if(revealsSinceReminder >= REVEALS_PER_REMINDER){
+    revealsSinceReminder = 0;
+    showBreakReminder();
+  }
+}
+
+function speakMarathiBreakReminder(name){
   if(!('speechSynthesis' in window)) return;
-  try{
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.9;
-    utter.pitch = 1.15;
-    window.speechSynthesis.speak(utter);
-  }catch(e){ /* speech not available, the on-screen message still shows */ }
+  const text = `${name}, मोबाईल ठेव!`;
+  const doSpeak = ()=>{
+    try{
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'mr-IN';
+      const voices = window.speechSynthesis.getVoices();
+      const marathiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('mr'));
+      if(marathiVoice) utter.voice = marathiVoice;
+      utter.rate = 0.85;
+      utter.pitch = 1.1;
+      window.speechSynthesis.speak(utter);
+    }catch(e){ /* speech not available, the on-screen message still shows */ }
+  };
+  if(window.speechSynthesis.getVoices().length === 0){
+    window.speechSynthesis.addEventListener('voiceschanged', doSpeak, {once:true});
+  } else {
+    doSpeak();
+  }
 }
 
 const breakOverlay = document.getElementById('breakOverlay');
@@ -704,25 +714,12 @@ document.getElementById('breakClose').addEventListener('click', ()=>{
 });
 
 function showBreakReminder(){
-  const message = `${kidName}, put down the phone now! Time for a break!`;
-  breakTitle.textContent = `Time for a break, ${kidName}!`;
-  breakText.textContent = 'Put the phone down for a bit. Go play, drink some water!';
+  const name = getDisplayName();
+  breakTitle.textContent = `${name}, Mobile Thev!`;
+  breakText.textContent = 'मोबाईल ठेव! Put the mobile down for a while.';
   breakOverlay.classList.add('show');
-  speak(message);
+  speakMarathiBreakReminder(name);
 }
-
-setInterval(()=>{
-  if(!isTinyMode()) return;
-  if(document.visibilityState !== 'visible') return;
-  if(breakOverlay.classList.contains('show')) return;
-  activeSeconds++;
-  secondsSinceLastReminder++;
-  const threshold = activeSeconds <= BREAK_FIRST_REMINDER_SECONDS ? BREAK_FIRST_REMINDER_SECONDS : BREAK_REPEAT_SECONDS;
-  if(secondsSinceLastReminder >= threshold){
-    secondsSinceLastReminder = 0;
-    showBreakReminder();
-  }
-}, 1000);
 
 /* ---------------- Tabs ---------------- */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -967,6 +964,7 @@ function initScratchCanvas(card, canvas, prize, hint){
     card.classList.add('revealed');
     hint.style.display = 'none';
     showPrizeModal(prize);
+    registerReveal();
   }
 
   function start(evt){
@@ -1066,6 +1064,7 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
   setTimeout(()=>{
     spinning = false;
     showPrizeModal(winnerPrize);
+    registerReveal();
   }, 4600);
 });
 
