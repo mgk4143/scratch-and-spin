@@ -44,6 +44,42 @@
     margin:0 0 16px;
     font-size:0.95rem;
   }
+  .mode-toggle{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:18px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .mode-toggle input{ position:absolute; opacity:0; width:0; height:0; }
+  .toggle-track{
+    position:relative;
+    width:54px; height:30px;
+    background:rgba(255,255,255,0.3);
+    border-radius:20px;
+    transition:background .25s ease;
+    flex:none;
+  }
+  .toggle-thumb{
+    position:absolute;
+    top:3px; left:3px;
+    width:24px; height:24px;
+    background:#fff;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.85rem;
+    box-shadow:0 2px 5px rgba(0,0,0,0.25);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .mode-toggle input:checked + .toggle-track{ background:#ffd166; }
+  .mode-toggle input:checked + .toggle-track .toggle-thumb{ transform:translateX(24px); }
+  .toggle-label{
+    color:#fff;
+    font-weight:700;
+    font-size:0.88rem;
+    text-shadow:1px 1px 2px rgba(0,0,0,0.15);
+  }
   .tabs{
     display:flex;
     background:rgba(255,255,255,0.25);
@@ -97,6 +133,7 @@
     line-height:1.25;
   }
   .card .prize .emoji{ font-size:2.6rem; margin-bottom:6px; display:block; }
+  .card .prize .short-text{ display:none; }
   .card canvas{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -281,6 +318,26 @@
     pointer-events:none;
     z-index:99;
   }
+
+  /* ---- Tiny Kids Mode: bigger emoji, less text ---- */
+  body.tiny-mode .pool-note{ display:none; }
+  body.tiny-mode .grid{ grid-template-columns:1fr; gap:20px; }
+  body.tiny-mode .card .prize .emoji{ font-size:5.6rem; margin-bottom:12px; }
+  body.tiny-mode .card .prize .full-text{ display:none; }
+  body.tiny-mode .card .prize .short-text{
+    display:block;
+    font-size:1.9rem;
+    font-weight:900;
+    letter-spacing:0.2px;
+  }
+  body.tiny-mode .hint{ font-size:0.85rem; bottom:10px; }
+  body.tiny-mode .btn{ padding:18px 32px; font-size:1.15rem; }
+  body.tiny-mode .wheel-wrap{ width:min(92vw,380px); height:min(92vw,380px); }
+  body.tiny-mode .hub{ width:80px; height:80px; font-size:2.1rem; }
+  body.tiny-mode .modal .emoji{ font-size:6rem; }
+  body.tiny-mode .modal h2{ font-size:1.5rem; }
+  body.tiny-mode .modal p{ font-size:1.5rem; font-weight:800; color:#333; }
+  body.tiny-mode .modal button{ padding:16px 34px; font-size:1.1rem; }
 </style>
 </head>
 <body>
@@ -290,6 +347,12 @@
 <div class="wrap">
   <h1><span class="twinkle">&#10024;</span> Lucky Scratch &amp; Spin! <span class="twinkle" style="animation-delay:0.6s">&#10024;</span></h1>
   <p class="subtitle">Scratch a card or spin the wheel to reveal your surprise!</p>
+
+  <label class="mode-toggle">
+    <input type="checkbox" id="tinyModeToggle">
+    <span class="toggle-track"><span class="toggle-thumb">&#128118;</span></span>
+    <span class="toggle-label">Tiny Kids Mode</span>
+  </label>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="scratch">&#127914; Scratch</button>
@@ -334,145 +397,145 @@
 /* Fun rewards + jokes + mini-challenges + real learn-something facts, kid-friendly */
 const FUN_FACTS = [
   // Animals
-  { emoji:'🦒', text:'Giraffes only sleep 2 hours a day!' },
-  { emoji:'🐙', text:'Octopuses have three hearts!' },
-  { emoji:'🦈', text:'Sharks are older than trees!' },
-  { emoji:'🐝', text:'Bees can recognize human faces!' },
-  { emoji:'🦩', text:'Flamingos turn pink from eating shrimp!' },
-  { emoji:'🐘', text:"Elephants can't jump!" },
-  { emoji:'🦋', text:'Butterflies taste with their feet!' },
-  { emoji:'🐧', text:'Penguins propose with a pebble!' },
-  { emoji:'🦉', text:"Owls can't move their eyeballs!" },
-  { emoji:'🐿️', text:'Squirrels forget where they hide nuts!' },
-  { emoji:'🦭', text:'A group of walruses is a "huddle"!' },
-  { emoji:'🦥', text:'Sloths can hold their breath 40 minutes!' },
-  { emoji:'🐨', text:'Koalas sleep up to 22 hours a day!' },
-  { emoji:'🐫', text:"Camel humps store fat, not water!" },
-  { emoji:'🦔', text:'Hedgehogs can have 7,000 spines!' },
-  { emoji:'🐊', text:"Crocodiles can't stick out their tongues!" },
-  { emoji:'🦓', text:'No two zebras have the same stripes!' },
-  { emoji:'🐍', text:'Snakes smell with their tongues!' },
-  { emoji:'🦆', text:"Baby ducks can't quack loudly yet!" },
-  { emoji:'🐜', text:'Ants never sleep!' },
-  { emoji:'🦘', text:"Kangaroos can't walk backward!" },
-  { emoji:'🐻‍❄️', text:'Polar bears have black skin!' },
-  { emoji:'🦦', text:'Otters hold hands while sleeping!' },
-  { emoji:'🐌', text:'A snail can sleep for 3 years!' },
-  { emoji:'🦗', text:'Crickets hear through their knees!' },
+  { emoji:'🦒', text:'Giraffes only sleep 2 hours a day!', short:'Giraffe!' },
+  { emoji:'🐙', text:'Octopuses have three hearts!', short:'Octopus!' },
+  { emoji:'🦈', text:'Sharks are older than trees!', short:'Shark!' },
+  { emoji:'🐝', text:'Bees can recognize human faces!', short:'Bee!' },
+  { emoji:'🦩', text:'Flamingos turn pink from eating shrimp!', short:'Flamingo!' },
+  { emoji:'🐘', text:"Elephants can't jump!", short:'Elephant!' },
+  { emoji:'🦋', text:'Butterflies taste with their feet!', short:'Butterfly!' },
+  { emoji:'🐧', text:'Penguins propose with a pebble!', short:'Penguin!' },
+  { emoji:'🦉', text:"Owls can't move their eyeballs!", short:'Owl!' },
+  { emoji:'🐿️', text:'Squirrels forget where they hide nuts!', short:'Squirrel!' },
+  { emoji:'🦭', text:'A group of walruses is a "huddle"!', short:'Walrus!' },
+  { emoji:'🦥', text:'Sloths can hold their breath 40 minutes!', short:'Sloth!' },
+  { emoji:'🐨', text:'Koalas sleep up to 22 hours a day!', short:'Koala!' },
+  { emoji:'🐫', text:"Camel humps store fat, not water!", short:'Camel!' },
+  { emoji:'🦔', text:'Hedgehogs can have 7,000 spines!', short:'Hedgehog!' },
+  { emoji:'🐊', text:"Crocodiles can't stick out their tongues!", short:'Crocodile!' },
+  { emoji:'🦓', text:'No two zebras have the same stripes!', short:'Zebra!' },
+  { emoji:'🐍', text:'Snakes smell with their tongues!', short:'Snake!' },
+  { emoji:'🦆', text:"Baby ducks can't quack loudly yet!", short:'Duck!' },
+  { emoji:'🐜', text:'Ants never sleep!', short:'Ant!' },
+  { emoji:'🦘', text:"Kangaroos can't walk backward!", short:'Kangaroo!' },
+  { emoji:'🐻‍❄️', text:'Polar bears have black skin!', short:'Polar Bear!' },
+  { emoji:'🦦', text:'Otters hold hands while sleeping!', short:'Otter!' },
+  { emoji:'🐌', text:'A snail can sleep for 3 years!', short:'Snail!' },
+  { emoji:'🦗', text:'Crickets hear through their knees!', short:'Cricket!' },
   // Space
-  { emoji:'🪐', text:'Saturn is so light it could float in water!' },
-  { emoji:'🌞', text:'A million Earths could fit in the Sun!' },
-  { emoji:'🌙', text:'The Moon is slowly drifting away!' },
-  { emoji:'⭐', text:'Stars twinkle because of our air!' },
-  { emoji:'🚀', text:"A day on Venus is longer than its year!" },
-  { emoji:'☄️', text:'Space is completely silent!' },
-  { emoji:'🛰️', text:'Moon footprints from 1969 are still there!' },
-  { emoji:'🌌', text:'The Milky Way has 100 billion stars!' },
-  { emoji:'👨‍🚀', text:'Astronauts grow taller in space!' },
-  { emoji:'🌍', text:"Earth is the only planet not named after a god!" },
-  { emoji:'🔴', text:'Mars has the tallest volcano ever found!' },
-  { emoji:'🧊', text:'Some moons hide oceans under their ice!' },
-  { emoji:'🌠', text:'Shooting stars are rocks burning up!' },
-  { emoji:'🪄', text:'It may rain diamonds on Jupiter!' },
-  { emoji:'🌗', text:'We only ever see one side of the Moon!' },
+  { emoji:'🪐', text:'Saturn is so light it could float in water!', short:'Saturn!' },
+  { emoji:'🌞', text:'A million Earths could fit in the Sun!', short:'Sun!' },
+  { emoji:'🌙', text:'The Moon is slowly drifting away!', short:'Moon!' },
+  { emoji:'⭐', text:'Stars twinkle because of our air!', short:'Star!' },
+  { emoji:'🚀', text:"A day on Venus is longer than its year!", short:'Rocket!' },
+  { emoji:'☄️', text:'Space is completely silent!', short:'Comet!' },
+  { emoji:'🛰️', text:'Moon footprints from 1969 are still there!', short:'Moon Walk!' },
+  { emoji:'🌌', text:'The Milky Way has 100 billion stars!', short:'Galaxy!' },
+  { emoji:'👨‍🚀', text:'Astronauts grow taller in space!', short:'Astronaut!' },
+  { emoji:'🌍', text:"Earth is the only planet not named after a god!", short:'Earth!' },
+  { emoji:'🔴', text:'Mars has the tallest volcano ever found!', short:'Mars!' },
+  { emoji:'🧊', text:'Some moons hide oceans under their ice!', short:'Icy Moon!' },
+  { emoji:'🌠', text:'Shooting stars are rocks burning up!', short:'Shooting Star!' },
+  { emoji:'🪄', text:'It may rain diamonds on Jupiter!', short:'Space Magic!' },
+  { emoji:'🌗', text:'We only ever see one side of the Moon!', short:'Moon!' },
   // Dinosaurs
-  { emoji:'🦖', text:"T-Rex arms couldn't reach its own mouth!" },
-  { emoji:'🦕', text:'Some dinosaurs were smaller than chickens!' },
-  { emoji:'🥚', text:'Dinosaurs hatched from eggs, like birds!' },
-  { emoji:'🦴', text:'Birds are living dinosaur descendants!' },
-  { emoji:'🌋', text:"A giant asteroid ended the dinosaur age!" },
-  { emoji:'🦕', text:'The biggest dinosaurs ate only plants!' },
-  { emoji:'🦖', text:'Some dinosaurs had feathers!' },
-  { emoji:'🦴', text:'Fossils can take millions of years to form!' },
-  { emoji:'🦖', text:"Stegosaurus had a walnut-sized brain!" },
-  { emoji:'🦕', text:'Dinosaur footprints still exist today!' },
-  { emoji:'🦖', text:'Not all dinosaurs were giant — some were tiny!' },
-  { emoji:'🐊', text:'Dinosaurs lived for 165 million years!' },
+  { emoji:'🦖', text:"T-Rex arms couldn't reach its own mouth!", short:'T-Rex!' },
+  { emoji:'🦕', text:'Some dinosaurs were smaller than chickens!', short:'Tiny Dino!' },
+  { emoji:'🥚', text:'Dinosaurs hatched from eggs, like birds!', short:'Dino Egg!' },
+  { emoji:'🦴', text:'Birds are living dinosaur descendants!', short:'Dino Bird!' },
+  { emoji:'🌋', text:"A giant asteroid ended the dinosaur age!", short:'Volcano!' },
+  { emoji:'🦕', text:'The biggest dinosaurs ate only plants!', short:'Big Dino!' },
+  { emoji:'🦖', text:'Some dinosaurs had feathers!', short:'Feather Dino!' },
+  { emoji:'🦴', text:'Fossils can take millions of years to form!', short:'Fossil!' },
+  { emoji:'🦖', text:"Stegosaurus had a walnut-sized brain!", short:'Stegosaurus!' },
+  { emoji:'🦕', text:'Dinosaur footprints still exist today!', short:'Dino Steps!' },
+  { emoji:'🦖', text:'Not all dinosaurs were giant — some were tiny!', short:'Tiny Dino!' },
+  { emoji:'🐊', text:'Dinosaurs lived for 165 million years!', short:'Dino Days!' },
   // Ocean
-  { emoji:'🐳', text:'Blue whales are the biggest animals ever!' },
-  { emoji:'🐠', text:'Clownfish can change from male to female!' },
-  { emoji:'🦑', text:'Giant squids have huge eyes, size of a plate!' },
-  { emoji:'🐚', text:'Some seashells are older than dinosaurs!' },
-  { emoji:'🌊', text:'The ocean has mountains taller than Everest!' },
-  { emoji:'🐡', text:'Pufferfish inflate to scare predators!' },
-  { emoji:'🦀', text:'Crabs can walk in any direction!' },
-  { emoji:'🐬', text:'Dolphins call each other by name!' },
-  { emoji:'🌊', text:"We've explored less than 20% of the ocean!" },
-  { emoji:'🦐', text:"A shrimp's heart is in its head!" },
-  { emoji:'🐢', text:'Sea turtles can live over 100 years!' },
-  { emoji:'🐋', text:'Whale songs can travel for miles underwater!' },
+  { emoji:'🐳', text:'Blue whales are the biggest animals ever!', short:'Whale!' },
+  { emoji:'🐠', text:'Clownfish can change from male to female!', short:'Clownfish!' },
+  { emoji:'🦑', text:'Giant squids have huge eyes, size of a plate!', short:'Squid!' },
+  { emoji:'🐚', text:'Some seashells are older than dinosaurs!', short:'Seashell!' },
+  { emoji:'🌊', text:'The ocean has mountains taller than Everest!', short:'Ocean!' },
+  { emoji:'🐡', text:'Pufferfish inflate to scare predators!', short:'Pufferfish!' },
+  { emoji:'🦀', text:'Crabs can walk in any direction!', short:'Crab!' },
+  { emoji:'🐬', text:'Dolphins call each other by name!', short:'Dolphin!' },
+  { emoji:'🌊', text:"We've explored less than 20% of the ocean!", short:'Deep Sea!' },
+  { emoji:'🦐', text:"A shrimp's heart is in its head!", short:'Shrimp!' },
+  { emoji:'🐢', text:'Sea turtles can live over 100 years!', short:'Turtle!' },
+  { emoji:'🐋', text:'Whale songs can travel for miles underwater!', short:'Whale Song!' },
   // Body & Science
-  { emoji:'🧠', text:"Your brain uses 20% of your body's energy!" },
-  { emoji:'👃', text:'Your nose can remember 50,000 scents!' },
-  { emoji:'❤️', text:'Your heart beats 100,000 times a day!' },
-  { emoji:'💪', text:'Your bones are stronger than steel by weight!' },
-  { emoji:'😴', text:"You can't sneeze with your eyes open!" },
-  { emoji:'🦷', text:'Tooth enamel is the hardest part of you!' },
-  { emoji:'👶', text:'Babies are born with almost 300 bones!' },
-  { emoji:'🍌', text:'You share 60% of your DNA with a banana!' },
-  { emoji:'🩸', text:'Your blood vessels could circle Earth twice!' },
-  { emoji:'💧', text:"You're made of about 60% water!" },
-  { emoji:'🌈', text:'Your eyes can see about 10 million colors!' },
-  { emoji:'🫁', text:'You breathe about 20,000 times a day!' },
+  { emoji:'🧠', text:"Your brain uses 20% of your body's energy!", short:'Brain Power!' },
+  { emoji:'👃', text:'Your nose can remember 50,000 scents!', short:'Super Nose!' },
+  { emoji:'❤️', text:'Your heart beats 100,000 times a day!', short:'Heartbeat!' },
+  { emoji:'💪', text:'Your bones are stronger than steel by weight!', short:'Strong Bones!' },
+  { emoji:'😴', text:"You can't sneeze with your eyes open!", short:'Sneeze!' },
+  { emoji:'🦷', text:'Tooth enamel is the hardest part of you!', short:'Teeth!' },
+  { emoji:'👶', text:'Babies are born with almost 300 bones!', short:'Baby Bones!' },
+  { emoji:'🍌', text:'You share 60% of your DNA with a banana!', short:'Banana You!' },
+  { emoji:'🩸', text:'Your blood vessels could circle Earth twice!', short:'Blood!' },
+  { emoji:'💧', text:"You're made of about 60% water!", short:'Water You!' },
+  { emoji:'🌈', text:'Your eyes can see about 10 million colors!', short:'Rainbow Eyes!' },
+  { emoji:'🫁', text:'You breathe about 20,000 times a day!', short:'Big Breath!' },
   // Jokes
-  { emoji:'🍌', text:'Why did the banana see a doctor? It was not peeling well!' },
-  { emoji:'🐔', text:'Why did the chicken join a band? It had drumsticks!' },
-  { emoji:'🐕', text:'What do you call a dog magician? A labracadabrador!' },
-  { emoji:'🍕', text:'Why did the pizza go to the gym? For a stronger crust!' },
-  { emoji:'🐟', text:'What do you call a fish with no eyes? A fsh!' },
-  { emoji:'🦕', text:'What do you call a sleeping dinosaur? A dino-snore!' },
-  { emoji:'🍦', text:"What did the ice cream say to the cone? You're cool!" },
-  { emoji:'🐝', text:"What do bees say on hot days? Let's beeline for shade!" },
-  { emoji:'🌙', text:'Why did the moon skip dinner? It was already full!' },
-  { emoji:'🐱', text:"Why don't cats play cards in the jungle? Too many cheetahs!" },
-  { emoji:'🥕', text:'Why did the carrot blush? It saw the salad dressing!' },
-  { emoji:'🐮', text:'What do cows read? Cow-mic books!' },
-  { emoji:'🐘', text:"Why don't elephants use computers? They fear the mouse!" },
-  { emoji:'🍩', text:'What did one plate say to the other? Lunch is on me!' },
-  { emoji:'🦆', text:'What do you call a duck that steals? A robber ducky!' },
+  { emoji:'🍌', text:'Why did the banana see a doctor? It was not peeling well!', short:'Banana Joke!' },
+  { emoji:'🐔', text:'Why did the chicken join a band? It had drumsticks!', short:'Chicken Joke!' },
+  { emoji:'🐕', text:'What do you call a dog magician? A labracadabrador!', short:'Dog Joke!' },
+  { emoji:'🍕', text:'Why did the pizza go to the gym? For a stronger crust!', short:'Pizza Joke!' },
+  { emoji:'🐟', text:'What do you call a fish with no eyes? A fsh!', short:'Fish Joke!' },
+  { emoji:'🦕', text:'What do you call a sleeping dinosaur? A dino-snore!', short:'Dino Joke!' },
+  { emoji:'🍦', text:"What did the ice cream say to the cone? You're cool!", short:'Ice Cream Joke!' },
+  { emoji:'🐝', text:"What do bees say on hot days? Let's beeline for shade!", short:'Bee Joke!' },
+  { emoji:'🌙', text:'Why did the moon skip dinner? It was already full!', short:'Moon Joke!' },
+  { emoji:'🐱', text:"Why don't cats play cards in the jungle? Too many cheetahs!", short:'Cat Joke!' },
+  { emoji:'🥕', text:'Why did the carrot blush? It saw the salad dressing!', short:'Carrot Joke!' },
+  { emoji:'🐮', text:'What do cows read? Cow-mic books!', short:'Cow Joke!' },
+  { emoji:'🐘', text:"Why don't elephants use computers? They fear the mouse!", short:'Elephant Joke!' },
+  { emoji:'🍩', text:'What did one plate say to the other? Lunch is on me!', short:'Donut Joke!' },
+  { emoji:'🦆', text:'What do you call a duck that steals? A robber ducky!', short:'Duck Joke!' },
   // Mini Challenges
-  { emoji:'🕺', text:'Do a silly dance for 10 seconds!' },
-  { emoji:'🦁', text:'Roar like a lion three times!' },
-  { emoji:'🐸', text:'Hop like a frog five times!' },
-  { emoji:'😂', text:'Make the funniest face you can!' },
-  { emoji:'🙌', text:'Do five jumping jacks right now!' },
-  { emoji:'🎭', text:'Act like your favorite animal for 10 seconds!' },
-  { emoji:'🎤', text:'Try to sing the alphabet backward!' },
-  { emoji:'🤸', text:'Try to touch your toes without bending your knees!' },
-  { emoji:'🥁', text:'Drum a beat on your legs for 5 seconds!' },
-  { emoji:'🪼', text:'Wiggle like a jellyfish for 5 seconds!' },
-  { emoji:'👏', text:'Clap a rhythm for someone to copy!' },
-  { emoji:'🧘', text:'Balance on one foot for 10 seconds!' },
-  { emoji:'🐒', text:'Pat your head and rub your tummy at once!' },
-  { emoji:'😜', text:'Stick out your tongue and cross your eyes!' },
-  { emoji:'🏃', text:'Run in place for 10 seconds!' },
+  { emoji:'🕺', text:'Do a silly dance for 10 seconds!', short:'Dance!' },
+  { emoji:'🦁', text:'Roar like a lion three times!', short:'Roar!' },
+  { emoji:'🐸', text:'Hop like a frog five times!', short:'Hop!' },
+  { emoji:'😂', text:'Make the funniest face you can!', short:'Funny Face!' },
+  { emoji:'🙌', text:'Do five jumping jacks right now!', short:'Jump!' },
+  { emoji:'🎭', text:'Act like your favorite animal for 10 seconds!', short:'Animal Time!' },
+  { emoji:'🎤', text:'Try to sing the alphabet backward!', short:'Sing!' },
+  { emoji:'🤸', text:'Try to touch your toes without bending your knees!', short:'Stretch!' },
+  { emoji:'🥁', text:'Drum a beat on your legs for 5 seconds!', short:'Drum!' },
+  { emoji:'🪼', text:'Wiggle like a jellyfish for 5 seconds!', short:'Wiggle!' },
+  { emoji:'👏', text:'Clap a rhythm for someone to copy!', short:'Clap!' },
+  { emoji:'🧘', text:'Balance on one foot for 10 seconds!', short:'Balance!' },
+  { emoji:'🐒', text:'Pat your head and rub your tummy at once!', short:'Monkey See!' },
+  { emoji:'😜', text:'Stick out your tongue and cross your eyes!', short:'Silly Face!' },
+  { emoji:'🏃', text:'Run in place for 10 seconds!', short:'Run!' },
   // Numbers & Math
-  { emoji:'🔢', text:'Zero was invented over 1,500 years ago!' },
-  { emoji:'➗', text:'There are infinite numbers between 0 and 1!' },
-  { emoji:'🎲', text:"A die's opposite sides always add to 7!" },
-  { emoji:'🧮', text:'"Hundred" came from an old word for 120!' },
-  { emoji:'🔺', text:'Triangles are the strongest shape in nature!' },
-  { emoji:'💯', text:'Ancient Egyptians used fractions 4,000 years ago!' },
-  { emoji:'🕐', text:'A "jiffy" is an actual unit of time!' },
-  { emoji:'🐝', text:'Bees can count up to four!' },
+  { emoji:'🔢', text:'Zero was invented over 1,500 years ago!', short:'Zero!' },
+  { emoji:'➗', text:'There are infinite numbers between 0 and 1!', short:'Numbers!' },
+  { emoji:'🎲', text:"A die's opposite sides always add to 7!", short:'Dice!' },
+  { emoji:'🧮', text:'"Hundred" came from an old word for 120!', short:'Big Number!' },
+  { emoji:'🔺', text:'Triangles are the strongest shape in nature!', short:'Triangle!' },
+  { emoji:'💯', text:'Ancient Egyptians used fractions 4,000 years ago!', short:'Fractions!' },
+  { emoji:'🕐', text:'A "jiffy" is an actual unit of time!', short:'Jiffy!' },
+  { emoji:'🐝', text:'Bees can count up to four!', short:'Counting Bee!' },
   // World & Geography
-  { emoji:'🗺️', text:'Russia spans 11 time zones!' },
-  { emoji:'🏔️', text:'Mount Everest grows a few mm every year!' },
-  { emoji:'🌋', text:'There are 1,500+ active volcanoes on Earth!' },
-  { emoji:'🏝️', text:'Australia is also a continent!' },
-  { emoji:'🧊', text:"Antarctica is the world's largest desert!" },
-  { emoji:'🌎', text:'Africa could fit the USA, China, and India!' },
-  { emoji:'🏞️', text:"The Amazon makes 20% of Earth's oxygen!" },
-  { emoji:'🗾', text:'Japan has over 6,800 islands!' },
+  { emoji:'🗺️', text:'Russia spans 11 time zones!', short:'Map!' },
+  { emoji:'🏔️', text:'Mount Everest grows a few mm every year!', short:'Mountain!' },
+  { emoji:'🌋', text:'There are 1,500+ active volcanoes on Earth!', short:'Volcano!' },
+  { emoji:'🏝️', text:'Australia is also a continent!', short:'Island!' },
+  { emoji:'🧊', text:"Antarctica is the world's largest desert!", short:'Antarctica!' },
+  { emoji:'🌎', text:'Africa could fit the USA, China, and India!', short:'Africa!' },
+  { emoji:'🏞️', text:"The Amazon makes 20% of Earth's oxygen!", short:'Rainforest!' },
+  { emoji:'🗾', text:'Japan has over 6,800 islands!', short:'Japan!' },
   // Nature & Weather
-  { emoji:'🌈', text:'Rainbows are actually full circles!' },
-  { emoji:'⚡', text:"Lightning is hotter than the Sun's surface!" },
-  { emoji:'❄️', text:'No two snowflakes are exactly alike!' },
-  { emoji:'🌪️', text:'Tornadoes can spin faster than a race car!' },
-  { emoji:'🌳', text:'Trees can "talk" through their roots!' },
-  { emoji:'🍄', text:'Mushrooms are closer to animals than plants!' },
-  { emoji:'🌻', text:'Sunflowers track the sun across the sky!' },
-  { emoji:'🌧️', text:"Raindrops aren't shaped like teardrops!" },
+  { emoji:'🌈', text:'Rainbows are actually full circles!', short:'Rainbow!' },
+  { emoji:'⚡', text:"Lightning is hotter than the Sun's surface!", short:'Lightning!' },
+  { emoji:'❄️', text:'No two snowflakes are exactly alike!', short:'Snowflake!' },
+  { emoji:'🌪️', text:'Tornadoes can spin faster than a race car!', short:'Tornado!' },
+  { emoji:'🌳', text:'Trees can "talk" through their roots!', short:'Tree!' },
+  { emoji:'🍄', text:'Mushrooms are closer to animals than plants!', short:'Mushroom!' },
+  { emoji:'🌻', text:'Sunflowers track the sun across the sky!', short:'Sunflower!' },
+  { emoji:'🌧️', text:"Raindrops aren't shaped like teardrops!", short:'Raindrop!' },
 ];
 
 const COLOR_PAIRS = [
@@ -486,7 +549,7 @@ const COLOR_PAIRS = [
 
 const PRIZES = FUN_FACTS.map((f,i)=>{
   const [c1,c2] = COLOR_PAIRS[i % COLOR_PAIRS.length];
-  return { emoji:f.emoji, text:f.text, color1:c1, color2:c2 };
+  return { emoji:f.emoji, text:f.text, short:f.short, color1:c1, color2:c2 };
 });
 
 function shuffle(arr){
@@ -509,6 +572,32 @@ function randomPrize(){
 function pickUnique(n){
   return shuffle(PRIZES).slice(0, n);
 }
+
+/* ---------------- Tiny Kids Mode ---------------- */
+function isTinyMode(){
+  return document.body.classList.contains('tiny-mode');
+}
+function readStoredTinyMode(){
+  try{ return localStorage.getItem('tinyMode') === 'true'; }
+  catch(e){ return false; }
+}
+function storeTinyMode(val){
+  try{ localStorage.setItem('tinyMode', val); }catch(e){ /* ignore */ }
+}
+const tinyModeToggle = document.getElementById('tinyModeToggle');
+document.body.classList.toggle('tiny-mode', readStoredTinyMode());
+tinyModeToggle.checked = isTinyMode();
+tinyModeToggle.addEventListener('change', ()=>{
+  document.body.classList.toggle('tiny-mode', tinyModeToggle.checked);
+  storeTinyMode(tinyModeToggle.checked);
+  buildCards();
+  WHEEL_PRIZES = pickUnique(getWheelSize());
+  currentRotation = 0;
+  wheelSvg.style.transition = 'none';
+  wheelSvg.style.transform = 'rotate(0deg)';
+  buildWheel();
+  requestAnimationFrame(()=>{ wheelSvg.style.transition = ''; });
+});
 
 /* ---------------- Tabs ---------------- */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -606,14 +695,14 @@ document.getElementById('modalClose').addEventListener('click', ()=>{
 function showPrizeModal(prize){
   modalEmoji.textContent = prize.emoji;
   modalTitle.textContent = 'You won!';
-  modalText.textContent = prize.text;
+  modalText.textContent = isTinyMode() ? prize.short : prize.text;
   modalOverlay.classList.add('show');
   burstConfetti();
 }
 
 /* ---------------- Scratch Cards ---------------- */
 const grid = document.getElementById('grid');
-const NUM_CARDS = 9;
+function getNumCards(){ return isTinyMode() ? 6 : 9; }
 let shownPrizeTexts = [];
 
 function nextBatch(n){
@@ -636,7 +725,7 @@ function createCard(prize, delayIndex){
   const prizeDiv = document.createElement('div');
   prizeDiv.className = 'prize';
   prizeDiv.style.background = `linear-gradient(135deg, ${prize.color1}, ${prize.color2})`;
-  prizeDiv.innerHTML = `<span class="emoji">${prize.emoji}</span>${prize.text}`;
+  prizeDiv.innerHTML = `<span class="emoji">${prize.emoji}</span><span class="full-text">${prize.text}</span><span class="short-text">${prize.short}</span>`;
   card.appendChild(prizeDiv);
 
   const canvas = document.createElement('canvas');
@@ -654,11 +743,11 @@ function createCard(prize, delayIndex){
 function buildCards(){
   grid.innerHTML = '';
   shownPrizeTexts = [];
-  nextBatch(NUM_CARDS).forEach((p,i)=>createCard(p,i));
+  nextBatch(getNumCards()).forEach((p,i)=>createCard(p,i));
 }
 
 function loadMoreCards(){
-  nextBatch(NUM_CARDS).forEach((p,i)=>createCard(p,i));
+  nextBatch(getNumCards()).forEach((p,i)=>createCard(p,i));
 }
 
 function initScratchCanvas(card, canvas, prize, hint){
@@ -787,8 +876,8 @@ document.getElementById('loadMoreBtn').addEventListener('click', loadMoreCards);
 buildCards();
 
 /* ---------------- Spin Wheel ---------------- */
-const WHEEL_SIZE = 8;
-let WHEEL_PRIZES = pickUnique(WHEEL_SIZE);
+function getWheelSize(){ return isTinyMode() ? 6 : 8; }
+let WHEEL_PRIZES = pickUnique(getWheelSize());
 const wheelSvg = document.getElementById('wheel');
 const R = 150, CX = 150, CY = 150;
 
@@ -821,7 +910,7 @@ function buildWheel(){
     text.setAttribute('y', textPos.y);
     text.setAttribute('text-anchor','middle');
     text.setAttribute('dominant-baseline','middle');
-    text.setAttribute('font-size','22');
+    text.setAttribute('font-size', isTinyMode() ? '32' : '22');
     text.setAttribute('transform', `rotate(${midAngle}, ${textPos.x}, ${textPos.y})`);
     text.textContent = prize.emoji;
     wheelSvg.appendChild(text);
@@ -856,7 +945,7 @@ document.getElementById('spinBtn').addEventListener('click', ()=>{
 
 document.getElementById('shuffleWheelBtn').addEventListener('click', ()=>{
   if(spinning) return;
-  WHEEL_PRIZES = pickUnique(WHEEL_SIZE);
+  WHEEL_PRIZES = pickUnique(getWheelSize());
   currentRotation = 0;
   wheelSvg.style.transition = 'none';
   wheelSvg.style.transform = 'rotate(0deg)';
