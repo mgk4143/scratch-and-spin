@@ -161,8 +161,17 @@
     font-size:0.95rem;
     line-height:1.25;
   }
-  .card .prize .emoji{ font-size:2.6rem; margin-bottom:6px; display:block; }
-  .card .prize .short-text{ display:none; }
+  .card .prize .toy-img{
+    width:72px; height:72px;
+    background:#fff;
+    border-radius:50%;
+    padding:9px;
+    margin-bottom:8px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.18);
+  }
+  .card .prize .toy-img svg{ width:100%; height:100%; display:block; }
+  .card .prize .toy-name{ font-size:1rem; font-weight:800; }
   .card canvas{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -328,6 +337,8 @@
   }
   @keyframes pop{ from{ transform:scale(0.5); opacity:0;} to{ transform:scale(1); opacity:1;} }
   .modal .emoji{ font-size:4rem; display:block; margin-bottom:10px; }
+  #modalEmoji{ line-height:0; }
+  #modalEmoji svg{ width:96px; height:96px; display:inline-block; }
   .modal h2{ margin:0 0 6px; color:#7b2ff7; font-size:1.3rem; }
   .modal p{ margin:0 0 20px; color:#555; font-size:1rem; }
   .modal button{
@@ -347,23 +358,18 @@
     z-index:99;
   }
 
-  /* ---- Tiny Kids Mode: bigger emoji, less text (same 2x2 grid as default) ---- */
+  /* ---- Tiny Kids Mode: bigger toy image + name (same 2x2 grid as default) ---- */
   body.tiny-mode .pool-note{ display:none; }
-  body.tiny-mode .card .prize .emoji{ font-size:3.8rem; margin-bottom:8px; }
-  body.tiny-mode .card .prize .full-text{ display:none; }
-  body.tiny-mode .card .prize .short-text{
-    display:block;
-    font-size:1.3rem;
-    font-weight:900;
-    letter-spacing:0.2px;
-  }
+  body.tiny-mode .card .prize .toy-img{ width:98px; height:98px; padding:11px; margin-bottom:10px; }
+  body.tiny-mode .card .prize .toy-name{ font-size:1.35rem; font-weight:900; letter-spacing:0.2px; }
   body.tiny-mode .hint{ font-size:0.85rem; bottom:10px; }
   body.tiny-mode .btn{ padding:18px 32px; font-size:1.15rem; }
   body.tiny-mode .wheel-wrap{ width:min(92vw,380px); height:min(92vw,380px); }
   body.tiny-mode .hub{ width:80px; height:80px; font-size:2.1rem; }
   body.tiny-mode .modal .emoji{ font-size:6rem; }
+  body.tiny-mode #modalEmoji svg{ width:130px; height:130px; }
   body.tiny-mode .modal h2{ font-size:1.5rem; }
-  body.tiny-mode .modal p{ font-size:1.5rem; font-weight:800; color:#333; }
+  body.tiny-mode .modal p{ font-size:1.7rem; font-weight:800; color:#333; }
   body.tiny-mode .modal button{ padding:16px 34px; font-size:1.1rem; }
 
   .break-modal h2{ color:#e0663f; }
@@ -379,7 +385,7 @@
 
 <div class="wrap">
   <h1><span class="twinkle">&#10024;</span> Lucky Scratch &amp; Spin! <span class="twinkle" style="animation-delay:0.6s">&#10024;</span></h1>
-  <p class="subtitle">Scratch a card or spin the wheel to reveal your surprise!</p>
+  <p class="subtitle">Scratch a card or spin the wheel to find a fun toy!</p>
 
   <label class="mode-toggle">
     <input type="checkbox" id="tinyModeToggle">
@@ -398,7 +404,7 @@
   </div>
 
   <div class="panel active" id="panel-scratch">
-    <p class="pool-note">Over 130 facts, jokes &amp; challenges to discover!</p>
+    <p class="pool-note">Scratch to find all the fun toys!</p>
     <div class="grid" id="grid"></div>
     <div class="btn-row">
       <button class="btn btn-secondary" id="loadMoreBtn">&#8595; Load More</button>
@@ -441,163 +447,31 @@
 
 <script>
 /* ---------------- Shared prize pool ---------------- */
-/* Fun rewards + jokes + mini-challenges + real learn-something facts, kid-friendly */
-const FUN_FACTS = [
-  // Animals
-  { emoji:'🦒', text:'Giraffes only sleep 2 hours a day!', short:'Giraffe!' },
-  { emoji:'🐙', text:'Octopuses have three hearts!', short:'Octopus!' },
-  { emoji:'🦈', text:'Sharks are older than trees!', short:'Shark!' },
-  { emoji:'🐝', text:'Bees can recognize human faces!', short:'Bee!' },
-  { emoji:'🦩', text:'Flamingos turn pink from eating shrimp!', short:'Flamingo!' },
-  { emoji:'🐘', text:"Elephants can't jump!", short:'Elephant!' },
-  { emoji:'🦋', text:'Butterflies taste with their feet!', short:'Butterfly!' },
-  { emoji:'🐧', text:'Penguins propose with a pebble!', short:'Penguin!' },
-  { emoji:'🦉', text:"Owls can't move their eyeballs!", short:'Owl!' },
-  { emoji:'🐿️', text:'Squirrels forget where they hide nuts!', short:'Squirrel!' },
-  { emoji:'🦭', text:'A group of walruses is a "huddle"!', short:'Walrus!' },
-  { emoji:'🦥', text:'Sloths can hold their breath 40 minutes!', short:'Sloth!' },
-  { emoji:'🐨', text:'Koalas sleep up to 22 hours a day!', short:'Koala!' },
-  { emoji:'🐫', text:"Camel humps store fat, not water!", short:'Camel!' },
-  { emoji:'🦔', text:'Hedgehogs can have 7,000 spines!', short:'Hedgehog!' },
-  { emoji:'🐊', text:"Crocodiles can't stick out their tongues!", short:'Crocodile!' },
-  { emoji:'🦓', text:'No two zebras have the same stripes!', short:'Zebra!' },
-  { emoji:'🐍', text:'Snakes smell with their tongues!', short:'Snake!' },
-  { emoji:'🦆', text:"Baby ducks can't quack loudly yet!", short:'Duck!' },
-  { emoji:'🐜', text:'Ants never sleep!', short:'Ant!' },
-  { emoji:'🦘', text:"Kangaroos can't walk backward!", short:'Kangaroo!' },
-  { emoji:'🐻‍❄️', text:'Polar bears have black skin!', short:'Polar Bear!' },
-  { emoji:'🦦', text:'Otters hold hands while sleeping!', short:'Otter!' },
-  { emoji:'🐌', text:'A snail can sleep for 3 years!', short:'Snail!' },
-  { emoji:'🦗', text:'Crickets hear through their knees!', short:'Cricket!' },
-  // Space
-  { emoji:'🪐', text:'Saturn is so light it could float in water!', short:'Saturn!' },
-  { emoji:'🌞', text:'A million Earths could fit in the Sun!', short:'Sun!' },
-  { emoji:'🌙', text:'The Moon is slowly drifting away!', short:'Moon!' },
-  { emoji:'⭐', text:'Stars twinkle because of our air!', short:'Star!' },
-  { emoji:'🚀', text:"A day on Venus is longer than its year!", short:'Rocket!' },
-  { emoji:'☄️', text:'Space is completely silent!', short:'Comet!' },
-  { emoji:'🛰️', text:'Moon footprints from 1969 are still there!', short:'Moon Walk!' },
-  { emoji:'🌌', text:'The Milky Way has 100 billion stars!', short:'Galaxy!' },
-  { emoji:'👨‍🚀', text:'Astronauts grow taller in space!', short:'Astronaut!' },
-  { emoji:'🌍', text:"Earth is the only planet not named after a god!", short:'Earth!' },
-  { emoji:'🔴', text:'Mars has the tallest volcano ever found!', short:'Mars!' },
-  { emoji:'🧊', text:'Some moons hide oceans under their ice!', short:'Icy Moon!' },
-  { emoji:'🌠', text:'Shooting stars are rocks burning up!', short:'Shooting Star!' },
-  { emoji:'🪄', text:'It may rain diamonds on Jupiter!', short:'Space Magic!' },
-  { emoji:'🌗', text:'We only ever see one side of the Moon!', short:'Moon!' },
-  // Dinosaurs
-  { emoji:'🦖', text:"T-Rex arms couldn't reach its own mouth!", short:'T-Rex!' },
-  { emoji:'🦕', text:'Some dinosaurs were smaller than chickens!', short:'Tiny Dino!' },
-  { emoji:'🥚', text:'Dinosaurs hatched from eggs, like birds!', short:'Dino Egg!' },
-  { emoji:'🦴', text:'Birds are living dinosaur descendants!', short:'Dino Bird!' },
-  { emoji:'🌋', text:"A giant asteroid ended the dinosaur age!", short:'Volcano!' },
-  { emoji:'🦕', text:'The biggest dinosaurs ate only plants!', short:'Big Dino!' },
-  { emoji:'🦖', text:'Some dinosaurs had feathers!', short:'Feather Dino!' },
-  { emoji:'🦴', text:'Fossils can take millions of years to form!', short:'Fossil!' },
-  { emoji:'🦖', text:"Stegosaurus had a walnut-sized brain!", short:'Stegosaurus!' },
-  { emoji:'🦕', text:'Dinosaur footprints still exist today!', short:'Dino Steps!' },
-  { emoji:'🦖', text:'Not all dinosaurs were giant — some were tiny!', short:'Tiny Dino!' },
-  { emoji:'🐊', text:'Dinosaurs lived for 165 million years!', short:'Dino Days!' },
-  // Ocean
-  { emoji:'🐳', text:'Blue whales are the biggest animals ever!', short:'Whale!' },
-  { emoji:'🐠', text:'Clownfish can change from male to female!', short:'Clownfish!' },
-  { emoji:'🦑', text:'Giant squids have huge eyes, size of a plate!', short:'Squid!' },
-  { emoji:'🐚', text:'Some seashells are older than dinosaurs!', short:'Seashell!' },
-  { emoji:'🌊', text:'The ocean has mountains taller than Everest!', short:'Ocean!' },
-  { emoji:'🐡', text:'Pufferfish inflate to scare predators!', short:'Pufferfish!' },
-  { emoji:'🦀', text:'Crabs can walk in any direction!', short:'Crab!' },
-  { emoji:'🐬', text:'Dolphins call each other by name!', short:'Dolphin!' },
-  { emoji:'🌊', text:"We've explored less than 20% of the ocean!", short:'Deep Sea!' },
-  { emoji:'🦐', text:"A shrimp's heart is in its head!", short:'Shrimp!' },
-  { emoji:'🐢', text:'Sea turtles can live over 100 years!', short:'Turtle!' },
-  { emoji:'🐋', text:'Whale songs can travel for miles underwater!', short:'Whale Song!' },
-  // Body & Science
-  { emoji:'🧠', text:"Your brain uses 20% of your body's energy!", short:'Brain Power!' },
-  { emoji:'👃', text:'Your nose can remember 50,000 scents!', short:'Super Nose!' },
-  { emoji:'❤️', text:'Your heart beats 100,000 times a day!', short:'Heartbeat!' },
-  { emoji:'💪', text:'Your bones are stronger than steel by weight!', short:'Strong Bones!' },
-  { emoji:'😴', text:"You can't sneeze with your eyes open!", short:'Sneeze!' },
-  { emoji:'🦷', text:'Tooth enamel is the hardest part of you!', short:'Teeth!' },
-  { emoji:'👶', text:'Babies are born with almost 300 bones!', short:'Baby Bones!' },
-  { emoji:'🍌', text:'You share 60% of your DNA with a banana!', short:'Banana You!' },
-  { emoji:'🩸', text:'Your blood vessels could circle Earth twice!', short:'Blood!' },
-  { emoji:'💧', text:"You're made of about 60% water!", short:'Water You!' },
-  { emoji:'🌈', text:'Your eyes can see about 10 million colors!', short:'Rainbow Eyes!' },
-  { emoji:'🫁', text:'You breathe about 20,000 times a day!', short:'Big Breath!' },
-  // Jokes
-  { emoji:'🍌', text:'Why did the banana see a doctor? It was not peeling well!', short:'Banana Joke!' },
-  { emoji:'🐔', text:'Why did the chicken join a band? It had drumsticks!', short:'Chicken Joke!' },
-  { emoji:'🐕', text:'What do you call a dog magician? A labracadabrador!', short:'Dog Joke!' },
-  { emoji:'🍕', text:'Why did the pizza go to the gym? For a stronger crust!', short:'Pizza Joke!' },
-  { emoji:'🐟', text:'What do you call a fish with no eyes? A fsh!', short:'Fish Joke!' },
-  { emoji:'🦕', text:'What do you call a sleeping dinosaur? A dino-snore!', short:'Dino Joke!' },
-  { emoji:'🍦', text:"What did the ice cream say to the cone? You're cool!", short:'Ice Cream Joke!' },
-  { emoji:'🐝', text:"What do bees say on hot days? Let's beeline for shade!", short:'Bee Joke!' },
-  { emoji:'🌙', text:'Why did the moon skip dinner? It was already full!', short:'Moon Joke!' },
-  { emoji:'🐱', text:"Why don't cats play cards in the jungle? Too many cheetahs!", short:'Cat Joke!' },
-  { emoji:'🥕', text:'Why did the carrot blush? It saw the salad dressing!', short:'Carrot Joke!' },
-  { emoji:'🐮', text:'What do cows read? Cow-mic books!', short:'Cow Joke!' },
-  { emoji:'🐘', text:"Why don't elephants use computers? They fear the mouse!", short:'Elephant Joke!' },
-  { emoji:'🍩', text:'What did one plate say to the other? Lunch is on me!', short:'Donut Joke!' },
-  { emoji:'🦆', text:'What do you call a duck that steals? A robber ducky!', short:'Duck Joke!' },
-  // Mini Challenges
-  { emoji:'🕺', text:'Do a silly dance for 10 seconds!', short:'Dance!' },
-  { emoji:'🦁', text:'Roar like a lion three times!', short:'Roar!' },
-  { emoji:'🐸', text:'Hop like a frog five times!', short:'Hop!' },
-  { emoji:'😂', text:'Make the funniest face you can!', short:'Funny Face!' },
-  { emoji:'🙌', text:'Do five jumping jacks right now!', short:'Jump!' },
-  { emoji:'🎭', text:'Act like your favorite animal for 10 seconds!', short:'Animal Time!' },
-  { emoji:'🎤', text:'Try to sing the alphabet backward!', short:'Sing!' },
-  { emoji:'🤸', text:'Try to touch your toes without bending your knees!', short:'Stretch!' },
-  { emoji:'🥁', text:'Drum a beat on your legs for 5 seconds!', short:'Drum!' },
-  { emoji:'🪼', text:'Wiggle like a jellyfish for 5 seconds!', short:'Wiggle!' },
-  { emoji:'👏', text:'Clap a rhythm for someone to copy!', short:'Clap!' },
-  { emoji:'🧘', text:'Balance on one foot for 10 seconds!', short:'Balance!' },
-  { emoji:'🐒', text:'Pat your head and rub your tummy at once!', short:'Monkey See!' },
-  { emoji:'😜', text:'Stick out your tongue and cross your eyes!', short:'Silly Face!' },
-  { emoji:'🏃', text:'Run in place for 10 seconds!', short:'Run!' },
-  // Numbers & Math
-  { emoji:'🔢', text:'Zero was invented over 1,500 years ago!', short:'Zero!' },
-  { emoji:'➗', text:'There are infinite numbers between 0 and 1!', short:'Numbers!' },
-  { emoji:'🎲', text:"A die's opposite sides always add to 7!", short:'Dice!' },
-  { emoji:'🧮', text:'"Hundred" came from an old word for 120!', short:'Big Number!' },
-  { emoji:'🔺', text:'Triangles are the strongest shape in nature!', short:'Triangle!' },
-  { emoji:'💯', text:'Ancient Egyptians used fractions 4,000 years ago!', short:'Fractions!' },
-  { emoji:'🕐', text:'A "jiffy" is an actual unit of time!', short:'Jiffy!' },
-  { emoji:'🐝', text:'Bees can count up to four!', short:'Counting Bee!' },
-  // World & Geography
-  { emoji:'🗺️', text:'Russia spans 11 time zones!', short:'Map!' },
-  { emoji:'🏔️', text:'Mount Everest grows a few mm every year!', short:'Mountain!' },
-  { emoji:'🌋', text:'There are 1,500+ active volcanoes on Earth!', short:'Volcano!' },
-  { emoji:'🏝️', text:'Australia is also a continent!', short:'Island!' },
-  { emoji:'🧊', text:"Antarctica is the world's largest desert!", short:'Antarctica!' },
-  { emoji:'🌎', text:'Africa could fit the USA, China, and India!', short:'Africa!' },
-  { emoji:'🏞️', text:"The Amazon makes 20% of Earth's oxygen!", short:'Rainforest!' },
-  { emoji:'🗾', text:'Japan has over 6,800 islands!', short:'Japan!' },
-  // Nature & Weather
-  { emoji:'🌈', text:'Rainbows are actually full circles!', short:'Rainbow!' },
-  { emoji:'⚡', text:"Lightning is hotter than the Sun's surface!", short:'Lightning!' },
-  { emoji:'❄️', text:'No two snowflakes are exactly alike!', short:'Snowflake!' },
-  { emoji:'🌪️', text:'Tornadoes can spin faster than a race car!', short:'Tornado!' },
-  { emoji:'🌳', text:'Trees can "talk" through their roots!', short:'Tree!' },
-  { emoji:'🍄', text:'Mushrooms are closer to animals than plants!', short:'Mushroom!' },
-  { emoji:'🌻', text:'Sunflowers track the sun across the sky!', short:'Sunflower!' },
-  { emoji:'🌧️', text:"Raindrops aren't shaped like teardrops!", short:'Raindrop!' },
+/* Hand-drawn toy/object illustrations (inline SVG). Every item is a UNIQUE
+   picture paired with ONE name, so a picture can never show with the wrong
+   name and the same picture never repeats within a batch. */
+const TOYS = [
+  { name:'Ball', c:['#ff6b6b','#ee5253'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="23" fill="#ffd23f"/><path d="M32 9a23 23 0 0 1 0 46z" fill="#ff5a5f"/><ellipse cx="32" cy="32" rx="7.5" ry="23" fill="#4d96ff"/><circle cx="23" cy="22" r="4" fill="#fff" opacity=".5"/><circle cx="32" cy="32" r="23" fill="none" stroke="#2b2d42" stroke-width="1.5"/></svg>' },
+  { name:'Balloon', c:['#ff9ff3','#f368e0'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 8c9 0 15 7 15 16 0 11-9 18-15 22-6-4-15-11-15-22 0-9 6-16 15-16z" fill="#ff5a5f"/><path d="M30 46h4l-2 5z" fill="#ff8087"/><path d="M32 51c0 4 4 4 4 8" fill="none" stroke="#8d99ae" stroke-width="1.5"/><ellipse cx="26" cy="20" rx="4" ry="6" fill="#fff" opacity=".4"/></svg>' },
+  { name:'Teddy', c:['#fdcb6e','#e17055'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="16" r="7" fill="#b5793b"/><circle cx="44" cy="16" r="7" fill="#b5793b"/><circle cx="20" cy="16" r="3.5" fill="#e0a76a"/><circle cx="44" cy="16" r="3.5" fill="#e0a76a"/><circle cx="32" cy="30" r="18" fill="#c98a4b"/><circle cx="26" cy="27" r="2.5" fill="#3a2a1a"/><circle cx="38" cy="27" r="2.5" fill="#3a2a1a"/><ellipse cx="32" cy="34" rx="7" ry="6" fill="#e0a76a"/><circle cx="32" cy="32" r="2" fill="#3a2a1a"/><path d="M28 37q4 3 8 0" fill="none" stroke="#3a2a1a" stroke-width="1.3"/></svg>' },
+  { name:'Car', c:['#54a0ff','#2e86de'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="30" width="48" height="14" rx="4" fill="#ff5a5f"/><path d="M18 30l6-9h16l6 9z" fill="#ff8087"/><rect x="24" y="23" width="14" height="7" rx="2" fill="#cdeffd"/><circle cx="20" cy="46" r="6" fill="#2b2d42"/><circle cx="44" cy="46" r="6" fill="#2b2d42"/><circle cx="20" cy="46" r="2.5" fill="#cfd8dc"/><circle cx="44" cy="46" r="2.5" fill="#cfd8dc"/><circle cx="52" cy="36" r="2" fill="#ffd23f"/></svg>' },
+  { name:'Train', c:['#1dd1a1','#10ac84'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="26" width="26" height="20" rx="3" fill="#4d96ff"/><rect x="36" y="18" width="18" height="28" rx="3" fill="#ff5a5f"/><rect x="40" y="22" width="10" height="9" rx="1.5" fill="#cdeffd"/><rect x="14" y="30" width="8" height="8" rx="1" fill="#cdeffd"/><rect x="24" y="30" width="8" height="8" rx="1" fill="#cdeffd"/><rect x="8" y="46" width="48" height="4" rx="2" fill="#2b2d42"/><circle cx="18" cy="52" r="4" fill="#2b2d42"/><circle cx="32" cy="52" r="4" fill="#2b2d42"/><circle cx="46" cy="52" r="4" fill="#2b2d42"/><rect x="42" y="11" width="6" height="8" rx="1" fill="#2b2d42"/></svg>' },
+  { name:'Kite', c:['#a29bfe','#6c5ce7'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 8l16 16-16 16-16-16z" fill="#ff5a5f"/><path d="M32 8l16 16-16 16z" fill="#ffd23f"/><path d="M32 8v32M16 24h32" stroke="#fff" stroke-width="1.5"/><path d="M32 40v6M32 46l-4 6M32 46l4 6" fill="none" stroke="#8d99ae" stroke-width="1.5"/><circle cx="28" cy="52" r="2" fill="#4d96ff"/><circle cx="35" cy="55" r="2" fill="#1dd1a1"/></svg>' },
+  { name:'Drum', c:['#ff6348','#e55039'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M12 24v14c0 4 9 7 20 7s20-3 20-7V24" fill="#ff5a5f"/><ellipse cx="32" cy="24" rx="20" ry="7" fill="#fff3d1"/><path d="M14 26l14 8M34 34l16-8" stroke="#ffd23f" stroke-width="2"/><path d="M40 14l7-8M47 6l3 3" stroke="#8d5524" stroke-width="2.5" stroke-linecap="round"/><path d="M24 14l-7-8M17 6l-3 3" stroke="#8d5524" stroke-width="2.5" stroke-linecap="round"/></svg>' },
+  { name:'Star', c:['#feca57','#ff9f43'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 6l7 16 17 1-13 11 4 17-15-9-15 9 4-17-13-11 17-1z" fill="#ffd23f" stroke="#f0a500" stroke-width="1.5" stroke-linejoin="round"/></svg>' },
+  { name:'Rocket', c:['#5f27cd','#341f97'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 6c8 6 12 16 12 28l-4 8H24l-4-8c0-12 4-22 12-28z" fill="#eceff4"/><circle cx="32" cy="24" r="5" fill="#4d96ff"/><path d="M20 34l-8 6 8 2zM44 34l8 6-8 2z" fill="#ff5a5f"/><path d="M26 42h12l-3 8h-6z" fill="#ffd23f"/><path d="M30 50h4l-2 6z" fill="#ff8087"/></svg>' },
+  { name:'Boat', c:['#48dbfb','#0abde3'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M12 38h40l-6 12H18z" fill="#ff5a5f"/><rect x="30" y="14" width="3" height="24" fill="#8d5524"/><path d="M33 16l14 10-14 4z" fill="#ffd23f"/><path d="M30 18L18 30l12 4z" fill="#4d96ff"/><path d="M8 51q6 4 12 0t12 0 12 0 12 0" fill="none" stroke="#48cae4" stroke-width="2"/></svg>' },
+  { name:'Duck', c:['#ffd23f','#ff9f43'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><ellipse cx="30" cy="42" rx="20" ry="13" fill="#ffd23f"/><circle cx="44" cy="26" r="11" fill="#ffd23f"/><path d="M53 26h9l-6 5z" fill="#ff8c42"/><circle cx="45" cy="23" r="2.2" fill="#2b2d42"/><path d="M14 40q-6 2-8 8 6 1 12-2z" fill="#ffdf6b"/></svg>' },
+  { name:'Ice Cream', c:['#f78fb3','#f8a5c2'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M24 30h16l-6 26h-4z" fill="#e8b06a"/><path d="M24 30h16l-8 7z" fill="#d99a4e"/><circle cx="24" cy="26" r="9" fill="#ff9ec4"/><circle cx="40" cy="26" r="9" fill="#a0e7a0"/><circle cx="32" cy="20" r="9" fill="#ffe08a"/><circle cx="32" cy="14" r="2.5" fill="#ff5a5f"/></svg>' },
+  { name:'Apple', c:['#ff6b6b','#c0392b'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 20c-4-4-14-4-16 6-2 12 6 24 16 24s18-12 16-24c-2-10-12-10-16-6z" fill="#ff5a5f"/><path d="M32 20c-4-4-14-4-16 6-1 6 1 12 4 16 0-14 6-20 12-22z" fill="#ff8087"/><rect x="30" y="10" width="3" height="10" rx="1.5" fill="#8d5524"/><path d="M33 14q8-6 10 0-6 3-10 0z" fill="#1dd1a1"/></svg>' },
+  { name:'Blocks', c:['#00d2d3','#01a3a4'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="30" width="22" height="22" rx="3" fill="#ff5a5f"/><rect x="34" y="30" width="20" height="22" rx="3" fill="#4d96ff"/><rect x="20" y="9" width="22" height="21" rx="3" fill="#ffd23f"/><text x="15" y="47" font-size="15" font-weight="bold" fill="#fff" font-family="sans-serif">A</text><text x="39" y="47" font-size="15" font-weight="bold" fill="#fff" font-family="sans-serif">B</text><text x="25" y="26" font-size="14" font-weight="bold" fill="#7a4b00" font-family="sans-serif">C</text></svg>' },
+  { name:'Butterfly', c:['#fd79a8','#e84393'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 32C22 14 6 16 8 30c-2 12 14 14 24 4z" fill="#ff6bcb"/><path d="M32 32C42 14 58 16 56 30c2 12-14 14-24 4z" fill="#845ef7"/><path d="M32 32c-8 16-22 14-22 4 0-6 10-10 22-6z" fill="#ff9ec4"/><path d="M32 32c8 16 22 14 22 4 0-6-10-10-22-6z" fill="#b197fc"/><rect x="31" y="18" width="2.5" height="28" rx="1.2" fill="#2b2d42"/><path d="M32 18l-3-5M32 18l3-5" stroke="#2b2d42" stroke-width="1.5"/></svg>' },
+  { name:'Flower', c:['#55efc4','#00b894'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g fill="#ff6bcb"><circle cx="32" cy="14" r="8"/><circle cx="48" cy="26" r="8"/><circle cx="42" cy="44" r="8"/><circle cx="22" cy="44" r="8"/><circle cx="16" cy="26" r="8"/></g><circle cx="32" cy="30" r="9" fill="#ffd23f"/><path d="M32 38v20" stroke="#1dd1a1" stroke-width="3"/><path d="M32 50q8-2 10-8-8-1-10 4z" fill="#1dd1a1"/></svg>' },
+  { name:'Robot', c:['#7f8fa6','#4b6584'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="20" width="32" height="28" rx="5" fill="#8d99ae"/><rect x="22" y="26" width="20" height="12" rx="2" fill="#2b2d42"/><circle cx="28" cy="32" r="3" fill="#48cae4"/><circle cx="36" cy="32" r="3" fill="#48cae4"/><rect x="26" y="42" width="12" height="3" rx="1.5" fill="#2b2d42"/><rect x="28" y="10" width="8" height="8" rx="2" fill="#8d99ae"/><circle cx="32" cy="9" r="3" fill="#ff5a5f"/><rect x="10" y="26" width="6" height="14" rx="3" fill="#6c7a92"/><rect x="48" y="26" width="6" height="14" rx="3" fill="#6c7a92"/><rect x="20" y="48" width="8" height="8" rx="2" fill="#6c7a92"/><rect x="36" y="48" width="8" height="8" rx="2" fill="#6c7a92"/></svg>' },
+  { name:'Cupcake', c:['#e17055','#d63031'], svg:'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M18 34h28l-4 20H22z" fill="#ffe08a"/><path d="M18 34h28l-1 5H19z" fill="#f4c95d"/><path d="M16 34c0-11 32-11 32 0z" fill="#ff9ec4"/><path d="M20 30c2-6 8-6 8 0M28 28c1-7 8-7 9 0M37 30c1-6 7-5 7 1" fill="#ff6bcb"/><circle cx="32" cy="18" r="3" fill="#ff5a5f"/></svg>' },
 ];
 
-const COLOR_PAIRS = [
-  ['#ff6b6b','#ee5253'], ['#f78fb3','#f8a5c2'], ['#feca57','#ff9f43'],
-  ['#54a0ff','#2e86de'], ['#1dd1a1','#10ac84'], ['#5f27cd','#341f97'],
-  ['#ff9ff3','#f368e0'], ['#00d2d3','#01a3a4'], ['#c8d6e5','#8395a7'],
-  ['#ff6348','#e55039'], ['#78e08f','#38ada9'], ['#7f8fa6','#4b6584'],
-  ['#ffa502','#ff6348'], ['#48dbfb','#0abde3'], ['#a29bfe','#6c5ce7'],
-  ['#fd79a8','#e84393'], ['#55efc4','#00b894'], ['#fdcb6e','#e17055'],
-];
-
-const PRIZES = FUN_FACTS.map((f,i)=>{
-  const [c1,c2] = COLOR_PAIRS[i % COLOR_PAIRS.length];
-  return { emoji:f.emoji, text:f.text, short:f.short, color1:c1, color2:c2 };
-});
+const PRIZES = TOYS.map(t=>({ name:t.name, svg:t.svg, color1:t.c[0], color2:t.c[1] }));
 
 function shuffle(arr){
   const a = arr.slice();
@@ -683,27 +557,47 @@ function registerReveal(){
   }
 }
 
-function speakMarathiBreakReminder(name){
+/* Mobile browsers (esp. iOS Safari) only allow speech after a real user
+   gesture, so we "unlock" the speech engine on the very first tap. */
+let speechUnlocked = false;
+function unlockSpeech(){
+  if(speechUnlocked || !('speechSynthesis' in window)) return;
+  try{
+    const warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0;
+    window.speechSynthesis.speak(warm);
+    speechUnlocked = true;
+  }catch(e){ /* ignore */ }
+}
+window.addEventListener('touchend', unlockSpeech, {once:true});
+window.addEventListener('mousedown', unlockSpeech, {once:true});
+
+function pickIndianVoice(){
+  const voices = window.speechSynthesis.getVoices() || [];
+  return voices.find(v => /^mr/i.test(v.lang))          // Marathi (best) if installed
+      || voices.find(v => /^hi/i.test(v.lang))          // Hindi accent
+      || voices.find(v => /en[-_]?IN/i.test(v.lang))    // Indian English
+      || null;
+}
+
+function speakBreak(name){
   if(!('speechSynthesis' in window)) return;
-  const text = `${name}, मोबाईल ठेव!`;
-  const doSpeak = ()=>{
-    try{
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'mr-IN';
-      const voices = window.speechSynthesis.getVoices();
-      const marathiVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('mr'));
-      if(marathiVoice) utter.voice = marathiVoice;
-      utter.rate = 0.85;
-      utter.pitch = 1.1;
-      window.speechSynthesis.speak(utter);
-    }catch(e){ /* speech not available, the on-screen message still shows */ }
-  };
-  if(window.speechSynthesis.getVoices().length === 0){
-    window.speechSynthesis.addEventListener('voiceschanged', doSpeak, {once:true});
-  } else {
-    doSpeak();
-  }
+  try{
+    window.speechSynthesis.cancel();
+    const voice = pickIndianVoice();
+    const marathiVoice = voice && /^mr/i.test(voice.lang);
+    // With a real Marathi voice, say the Devanagari; otherwise say a Latin
+    // transliteration so ANY default voice still speaks it out loud.
+    const phrase = marathiVoice ? `${name}, मोबाईल ठेव!` : `${name}, mobile thev!`;
+    const utter = new SpeechSynthesisUtterance(phrase);
+    if(voice){ utter.voice = voice; utter.lang = voice.lang; }
+    else { utter.lang = 'en-IN'; }
+    utter.rate = 0.85;
+    utter.pitch = 1.1;
+    utter.volume = 1;
+    window.speechSynthesis.resume();   // iOS sometimes leaves the queue paused
+    window.speechSynthesis.speak(utter);
+  }catch(e){ /* speech unavailable — the on-screen message still shows */ }
 }
 
 const breakOverlay = document.getElementById('breakOverlay');
@@ -718,7 +612,7 @@ function showBreakReminder(){
   breakTitle.textContent = `${name}, Mobile Thev!`;
   breakText.textContent = 'मोबाईल ठेव! Put the mobile down for a while.';
   breakOverlay.classList.add('show');
-  speakMarathiBreakReminder(name);
+  speakBreak(name);
 }
 
 /* ---------------- Tabs ---------------- */
@@ -815,9 +709,9 @@ document.getElementById('modalClose').addEventListener('click', ()=>{
   modalOverlay.classList.remove('show');
 });
 function showPrizeModal(prize){
-  modalEmoji.textContent = prize.emoji;
-  modalTitle.textContent = 'You won!';
-  modalText.textContent = isTinyMode() ? prize.short : prize.text;
+  modalEmoji.innerHTML = prize.svg;
+  modalTitle.textContent = 'You got a...';
+  modalText.textContent = prize.name;
   modalOverlay.classList.add('show');
   burstConfetti();
 }
@@ -825,17 +719,17 @@ function showPrizeModal(prize){
 /* ---------------- Scratch Cards ---------------- */
 const grid = document.getElementById('grid');
 function getNumCards(){ return 9; }
-let shownPrizeTexts = [];
+let shownNames = [];
 
 function nextBatch(n){
   // avoid repeating anything shown so far in this session, until the pool runs out
-  let available = PRIZES.filter(p => !shownPrizeTexts.includes(p.text));
+  let available = PRIZES.filter(p => !shownNames.includes(p.name));
   if(available.length < n){
-    shownPrizeTexts = [];
+    shownNames = [];
     available = PRIZES.slice();
   }
   const batch = shuffle(available).slice(0, n);
-  shownPrizeTexts.push(...batch.map(p=>p.text));
+  shownNames.push(...batch.map(p=>p.name));
   return batch;
 }
 
@@ -847,7 +741,7 @@ function createCard(prize, delayIndex){
   const prizeDiv = document.createElement('div');
   prizeDiv.className = 'prize';
   prizeDiv.style.background = `linear-gradient(135deg, ${prize.color1}, ${prize.color2})`;
-  prizeDiv.innerHTML = `<span class="emoji">${prize.emoji}</span><span class="full-text">${prize.text}</span><span class="short-text">${prize.short}</span>`;
+  prizeDiv.innerHTML = `<span class="toy-img">${prize.svg}</span><span class="toy-name">${prize.name}</span>`;
   card.appendChild(prizeDiv);
 
   const canvas = document.createElement('canvas');
@@ -864,7 +758,7 @@ function createCard(prize, delayIndex){
 
 function buildCards(){
   grid.innerHTML = '';
-  shownPrizeTexts = [];
+  shownNames = [];
   nextBatch(getNumCards()).forEach((p,i)=>createCard(p,i));
 }
 
@@ -875,6 +769,13 @@ function loadMoreCards(){
 function initScratchCanvas(card, canvas, prize, hint){
   function setup(){
     const rect = card.getBoundingClientRect();
+    // On a fresh page load setup() can run before the browser has laid the
+    // card out, giving a 0x0 rect — which would paint an empty scratch layer
+    // and leave the toy fully visible. Wait for a real size before painting.
+    if(rect.width === 0 || rect.height === 0){
+      requestAnimationFrame(setup);
+      return;
+    }
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
@@ -1028,16 +929,30 @@ function buildWheel(){
     wheelSvg.appendChild(path);
 
     const midAngle = startAngle + segAngle/2;
-    const textPos = polarToCartesian(CX,CY,R*0.68,midAngle);
-    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x', textPos.x);
-    text.setAttribute('y', textPos.y);
-    text.setAttribute('text-anchor','middle');
-    text.setAttribute('dominant-baseline','middle');
-    text.setAttribute('font-size', isTinyMode() ? '32' : '22');
-    text.setAttribute('transform', `rotate(${midAngle}, ${textPos.x}, ${textPos.y})`);
-    text.textContent = prize.emoji;
-    wheelSvg.appendChild(text);
+    const iconPos = polarToCartesian(CX,CY,R*0.66,midAngle);
+    const svgns = 'http://www.w3.org/2000/svg';
+    const size = isTinyMode() ? 46 : 38;
+    const rot = `rotate(${midAngle}, ${iconPos.x}, ${iconPos.y})`;
+
+    // white sticker circle so the toy pops on any segment colour
+    const disc = document.createElementNS(svgns,'circle');
+    disc.setAttribute('cx', iconPos.x);
+    disc.setAttribute('cy', iconPos.y);
+    disc.setAttribute('r', size/2 + 4);
+    disc.setAttribute('fill', '#fff');
+    disc.setAttribute('transform', rot);
+    wheelSvg.appendChild(disc);
+
+    const img = document.createElementNS(svgns,'image');
+    const href = 'data:image/svg+xml,' + encodeURIComponent(prize.svg);
+    img.setAttribute('href', href);
+    img.setAttributeNS('http://www.w3.org/1999/xlink','href', href);
+    img.setAttribute('width', size);
+    img.setAttribute('height', size);
+    img.setAttribute('x', iconPos.x - size/2);
+    img.setAttribute('y', iconPos.y - size/2);
+    img.setAttribute('transform', rot);
+    wheelSvg.appendChild(img);
   });
 }
 buildWheel();
